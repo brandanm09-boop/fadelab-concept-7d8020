@@ -345,6 +345,20 @@
   }
   .field input:focus-visible{outline:3px solid var(--peach); outline-offset:1px; border-color:var(--peach)}
   .sheet-body .btn{width:100%; margin-top:18px; text-align:center}
+
+  /* personal barber link bar */
+  .linkbar{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    z-index:55; display:flex; align-items:center; gap:14px;
+    background:var(--panel); border:1px solid var(--peach); border-radius:10px;
+    padding:10px 12px 10px 18px; box-shadow:0 14px 40px rgba(0,0,0,.55);
+    font-size:14px; max-width:calc(100vw - 24px);
+  }
+  .linkbar strong{color:var(--peach)}
+  @media (max-width:560px){
+    .linkbar{flex-direction:column; gap:8px; padding:12px 14px; text-align:center; width:calc(100vw - 24px)}
+    .linkbar .btn{width:100%}
+  }
 </style>
 
 <div class="draft-tag">Concept · not live</div>
@@ -763,6 +777,39 @@
     document.querySelectorAll('.book-open').forEach(function(btn){
       btn.addEventListener('click', function(){ open(btn.getAttribute('data-barber')); });
     });
+    /* personal barber links: ?b=zk / ?b=mv (or #zk / #mv) — each barber's Instagram bio link */
+    var BARBER_LINKS = { zk: '@zk.thebarber', mv: '@mividalocaaa.33' };
+    var linkKey = '';
+    try { linkKey = (new URLSearchParams(location.search).get('b') || location.hash.replace('#','')).toLowerCase(); } catch(e){}
+    var linkedBarber = BARBER_LINKS[linkKey];
+    if (linkedBarber){
+      var lb = document.createElement('div');
+      lb.className = 'linkbar';
+      lb.setAttribute('role', 'region');
+      lb.setAttribute('aria-label', 'Personal booking link');
+      var msg = document.createElement('span');
+      msg.innerHTML = 'You\'re on <strong>' + linkedBarber + '</strong>\'s booking link';
+      var go = document.createElement('button');
+      go.type = 'button'; go.className = 'btn btn-solid btn-sm';
+      go.textContent = 'Book with ' + linkedBarber;
+      go.addEventListener('click', function(){ open(linkedBarber); });
+      lb.appendChild(msg); lb.appendChild(go);
+      document.body.appendChild(lb);
+      document.body.style.paddingBottom = '96px';
+      document.querySelectorAll('.barber .name a').forEach(function(a){
+        if (a.textContent.trim() === linkedBarber){
+          var card = a.closest('.barber');
+          if (card){
+            card.style.borderColor = 'var(--peach)';
+            setTimeout(function(){
+              var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              card.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+            }, 500);
+          }
+        }
+      });
+    }
+
     document.getElementById('sheet-close').addEventListener('click', function(){ close(false); });
     overlay.addEventListener('click', function(e){ if (e.target === overlay) close(false); });
     document.addEventListener('keydown', function(e){
