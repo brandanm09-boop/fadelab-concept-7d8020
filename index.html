@@ -611,7 +611,7 @@
     var lastFocus = null;
 
     function open(preset){
-      presetBarber = preset || null;
+      presetBarber = preset || linkedBarber || null;
       state = { service:null, barber:presetBarber, day:null, time:null, name:"", mobile:"" };
       stepIx = 0;
       lastFocus = document.activeElement;
@@ -783,6 +783,10 @@
     try { linkKey = (new URLSearchParams(location.search).get('b') || location.hash.replace('#','')).toLowerCase(); } catch(e){}
     var linkedBarber = BARBER_LINKS[linkKey];
     if (linkedBarber){
+      /* every Book button on a personal link books this barber (open() falls back to linkedBarber) */
+      var heroBtn = document.querySelector('.hero .book-open');
+      if (heroBtn) heroBtn.textContent = 'Book with ' + linkedBarber;
+
       var lb = document.createElement('div');
       lb.className = 'linkbar';
       lb.setAttribute('role', 'region');
@@ -793,21 +797,30 @@
       go.type = 'button'; go.className = 'btn btn-solid btn-sm';
       go.textContent = 'Book with ' + linkedBarber;
       go.addEventListener('click', function(){ open(linkedBarber); });
-      lb.appendChild(msg); lb.appendChild(go);
-      document.body.appendChild(lb);
-      document.body.style.paddingBottom = '96px';
-      document.querySelectorAll('.barber .name a').forEach(function(a){
-        if (a.textContent.trim() === linkedBarber){
-          var card = a.closest('.barber');
-          if (card){
-            card.style.borderColor = 'var(--peach)';
-            setTimeout(function(){
-              var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-              card.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
-            }, 500);
-          }
-        }
+      var hide = document.createElement('button');
+      hide.type = 'button'; hide.className = 'x';
+      hide.setAttribute('aria-label', 'Hide this bar');
+      hide.innerHTML = '&times;';
+      hide.addEventListener('click', function(){
+        lb.remove();
+        document.body.style.paddingBottom = '';
       });
+      lb.appendChild(msg); lb.appendChild(go); lb.appendChild(hide);
+      document.body.appendChild(lb);
+      document.body.style.paddingBottom = (lb.offsetHeight + 26) + 'px';
+
+      var cardBtn = document.querySelector('.book-open[data-barber="' + linkedBarber + '"]');
+      var card = cardBtn && cardBtn.closest('.barber');
+      if (card){
+        card.style.borderColor = 'var(--peach)';
+        var grid = card.parentNode;
+        var crew = grid.querySelector('.crew-card');
+        grid.insertBefore(card, crew ? crew.nextSibling : grid.firstChild);
+        setTimeout(function(){
+          var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          card.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+        }, 500);
+      }
     }
 
     document.getElementById('sheet-close').addEventListener('click', function(){ close(false); });
